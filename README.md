@@ -3,7 +3,7 @@
 This repository contains a numerical model for simulating the behavior of a passively Q-switched diode-pumped solid-state laser system. The purpose of this model is to analyze the evolution of key variables. The equations are solved using a system of coupled differential equations that describe the dynamics of the laser system.
 
 ## 1. Population Inversion in the Laser Crystal
-The population inversion, $$ N_{LA} $$, describes the difference in population between the upper and lower laser levels in the laser crystal. The rate equation for $ N_{LA} $ is given by:
+The population inversion, ` N_{LA} `, describes the difference in population between the upper and lower laser levels in the laser crystal. The rate equation for $ N_{LA} $ is given by:
 
 $$
 \frac{dN_{LA}}{dt} = \frac{P_{pump}}{h \nu_{pump} V_{LA}} - \frac{N_{LA}}{t_{sp}} - 2 N_{LA} \sigma_{LA} \Phi_{LA}
