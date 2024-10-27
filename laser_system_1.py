@@ -112,19 +112,16 @@ for P_pump in P_pump_values:
         dense_output=True,
     )
 
-    time_points = np.linspace(time_span[0], time_span[1], 1000000)
-    results = solution.sol(time_points)
-
-    N_LA_results = results[0]
-    Phi_results = results[1]
+    N_LA_results = solution.y[0]
+    Phi_results = solution.y[1]
 
     # Plot Photon Flux
     plt.subplot(1, 2, 1)
-    plt.plot(time_points, Phi_results, label=f'Pump Power: {P_pump:.2f} W')
+    plt.plot(solution.t, Phi_results, label=f'Pump Power: {P_pump:.2f} W')
 
     # Plot Population Inversion
     plt.subplot(1, 2, 2)
-    plt.plot(time_points, N_LA_results, label=f'Pump Power: {P_pump:.2f} W')
+    plt.plot(solution.t, N_LA_results, label=f'Pump Power: {P_pump:.2f} W')
 
 plt.subplot(1, 2, 1)
 plt.legend()

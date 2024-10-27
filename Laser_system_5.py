@@ -81,7 +81,7 @@ def laser_system(t, y, P_pump):
 
 
 # Range of pump power
-P_pump_values = np.linspace(0.1, 4.0, 9)  
+P_pump_values = np.linspace(0.1, 8.0, 15)  
 steady_state_results = [] 
 pulse_durations = [] 
 time_span = (0, 1e-3)
@@ -100,10 +100,8 @@ for P_pump in P_pump_values:
         atol=1e-9,
         rtol=1e-6
     )
-    # Extract results for the photon flux
-    time_points = np.linspace(time_span[0], time_span[1], 1000000)
-    results = solution.sol(time_points)
-    Phi_results = results[1]
+
+    Phi_results = solution.y[1]
 
     # Detect peaks in photon flux
     peak_indices, _ = find_peaks(Phi_results, height=np.max(Phi_results) * 0.5)
@@ -111,7 +109,7 @@ for P_pump in P_pump_values:
 
     # Calculate pulse duration (FWHM) for each detected peak
     for peak_index in peak_indices:
-        peak_time = time_points[peak_index]
+        peak_time = solution.t[peak_index]
         peak_flux = Phi_results[peak_index]
         
         # Calculate half maximum
@@ -123,8 +121,8 @@ for P_pump in P_pump_values:
 
         # Check if both left and right half-max points are found
         if len(left_idx) > 0 and len(right_idx) > 0:
-            left_time = time_points[left_idx[-1]]  # Last point before peak below half max
-            right_time = time_points[right_idx[0]]  # First point after peak below half max
+            left_time = solution.t[left_idx[-1]]  # Last point before peak below half max
+            right_time = solution.t[right_idx[0]]  # First point after peak below half max
             fwhm = right_time - left_time
             pulse_durations_current.append(fwhm)
 

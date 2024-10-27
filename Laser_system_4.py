@@ -79,7 +79,7 @@ def laser_system(t, y, P_pump):
     return [dN_dt, dPhi_dt, dNg_dt, dN1_dt, dN2_dt]
 
 # Range of pump power
-P_pump_values = np.linspace(0.1, 4.0, 10)  
+P_pump_values = np.linspace(0.1, 8.0, 20)  
 steady_state_results = [] 
 pulse_separations = [] 
 time_span = (0, 1e-3)
@@ -97,10 +97,7 @@ for P_pump in P_pump_values:
         dense_output=True,
     )
 
-    # Extract results for the photon flux
-    time_points = np.linspace(time_span[0], time_span[1], 500000)
-    results = solution.sol(time_points)
-    Phi_results = results[1]
+    Phi_results = solution.y[1]
 
     # Detect pulses based on photon flux
     pulse_times = []  # List to store times of detected pulses
@@ -109,7 +106,7 @@ for P_pump in P_pump_values:
     # Detect pulses by checking where photon flux crosses the threshold
     for i in range(1, len(Phi_results) - 1):
         if Phi_results[i - 1] < threshold and Phi_results[i] >= threshold:
-            pulse_times.append(time_points[i])
+            pulse_times.append(solution.t[i])
 
     pulse_intervals = np.diff(pulse_times)  # Time differences between consecutive pulses
     average_pulse_separation = np.mean(pulse_intervals)  # Average time between pulses

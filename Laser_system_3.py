@@ -98,10 +98,7 @@ for P_pump in P_pump_values:
         dense_output=True,
     )
 
-    # Extract results for the photon flux
-    time_points = np.linspace(time_span[0], time_span[1], 1000000)
-    results = solution.sol(time_points)
-    Phi_results = results[1]
+    Phi_results = solution.y[1]
 
     # Calculate the output power at each time step
     P_out = Phi_results * A_LA * E_photon * T_out
