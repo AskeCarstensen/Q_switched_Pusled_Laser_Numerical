@@ -79,9 +79,9 @@ def laser_system(t, y, P_pump):
 
 
 # Range of pump power
-P_pump_values = np.linspace(3.0, 4.0, 2)  
+P_pump_values = np.linspace(0.1, 4.0, 3)  
 steady_state_results = [] 
-time_span = (0, 1e-4)
+time_span = (0, 1e-3)
 
 #Photon Flux
 plt.figure(figsize=(12, 6))
@@ -109,7 +109,7 @@ for P_pump in P_pump_values:
         dense_output=True,
     )
 
-    time_points = np.linspace(time_span[0], time_span[1], 1000000)
+    time_points = np.linspace(time_span[0], time_span[1], 1000)
     results = solution.sol(time_points)
 
     N_LA_results = results[0]

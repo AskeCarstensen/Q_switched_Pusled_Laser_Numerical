@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import logging as log
+from scipy.signal import find_peaks
 
 log.basicConfig(
     level=log.INFO,
@@ -29,6 +30,8 @@ T_out = 0.15                            # Output mirror transmission
 L_passive = 0.03                        # Passive losses per round trip
 w_LA = 150e-6                           # Laser spot size [m]
 w_SA = 150e-6                           # New spot size in saturable absorber [m]
+A_LA = np.pi * w_LA**2                  # Cross-sectional area of the laser beam [m^2]
+E_photon = h * c / wavelength_LA        # Energy per photon [J]
 V_LA = L_pump * np.pi * (220e-6)**2     # Volume of laser crystal [m^3]
 
 # Initial conditions
@@ -77,26 +80,13 @@ def laser_system(t, y, P_pump):
     return [dN_dt, dPhi_dt, dNg_dt, dN1_dt, dN2_dt]
 
 
-
 # Range of pump power
-P_pump_values = np.linspace(3.0, 4.0, 2)  
+P_pump_values = np.linspace(0.1, 4.0, 9)  
 steady_state_results = [] 
-time_span = (0, 1e-4)
+pulse_durations = [] 
+time_span = (0, 1e-3)
 
-#Photon Flux
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
-plt.title("Photon Flux Over Time for Different Pump Powers (Spot Size: {w_SA}} µm)")
-plt.xlabel("Time [s]")
-plt.ylabel("Photon Flux [$m^{-2}s^{-1}$]")
-
-#Population Inversion
-plt.subplot(1, 2, 2)
-plt.title("Population Inversion Over Time for Different Pump Powers (Spot Size: {w_SA} µm)")
-plt.xlabel("Time [s]")
-plt.ylabel("Population Inversion [$m^{-3}$]")
-
-# Sweep over pump powers and solve solve_ivp
+# Solve the system for each pump power and calculate pulse duration
 for P_pump in P_pump_values:
     log.info(f'Simulating system for pump power: {P_pump:.2f} W')
     initial_conditions = [N_LA_initial, Phi_initial, Ng_initial, N1_initial, N2_initial]
@@ -107,25 +97,45 @@ for P_pump in P_pump_values:
         args=(P_pump,), 
         method='BDF', 
         dense_output=True,
+        atol=1e-9,
+        rtol=1e-6
     )
-
+    # Extract results for the photon flux
     time_points = np.linspace(time_span[0], time_span[1], 1000000)
     results = solution.sol(time_points)
-
-    N_LA_results = results[0]
     Phi_results = results[1]
 
-    # Plot Photon Flux
-    plt.subplot(1, 2, 1)
-    plt.plot(time_points, Phi_results, label=f'Pump Power: {P_pump:.2f} W')
+    # Detect peaks in photon flux
+    peak_indices, _ = find_peaks(Phi_results, height=np.max(Phi_results) * 0.5)
+    pulse_durations_current = []
 
-    # Plot Population Inversion
-    plt.subplot(1, 2, 2)
-    plt.plot(time_points, N_LA_results, label=f'Pump Power: {P_pump:.2f} W')
+    # Calculate pulse duration (FWHM) for each detected peak
+    for peak_index in peak_indices:
+        peak_time = time_points[peak_index]
+        peak_flux = Phi_results[peak_index]
+        
+        # Calculate half maximum
+        half_max = peak_flux / 2
+        
+        # Find the left and right half-max points around the peak
+        left_idx = np.where(Phi_results[:peak_index] <= half_max)[0]
+        right_idx = np.where(Phi_results[peak_index:] <= half_max)[0] + peak_index
 
-plt.subplot(1, 2, 1)
-plt.legend()
-plt.subplot(1, 2, 2)
-plt.legend()
-plt.tight_layout()
+        # Check if both left and right half-max points are found
+        if len(left_idx) > 0 and len(right_idx) > 0:
+            left_time = time_points[left_idx[-1]]  # Last point before peak below half max
+            right_time = time_points[right_idx[0]]  # First point after peak below half max
+            fwhm = right_time - left_time
+            pulse_durations_current.append(fwhm)
+
+    avg_pulse_duration = np.mean(pulse_durations_current)
+
+    pulse_durations.append(avg_pulse_duration)
+
+plt.figure(figsize=(8, 6))
+plt.plot(P_pump_values, pulse_durations, marker='o', linestyle='-')
+plt.title("Pulse Duration vs Pump Power")
+plt.xlabel("Pump Power [W]")
+plt.ylabel("Pulse Duration [s]")
+plt.grid(True)
 plt.show()

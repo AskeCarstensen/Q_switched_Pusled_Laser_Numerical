@@ -29,6 +29,8 @@ T_out = 0.15                            # Output mirror transmission
 L_passive = 0.03                        # Passive losses per round trip
 w_LA = 150e-6                           # Laser spot size [m]
 w_SA = 150e-6                           # New spot size in saturable absorber [m]
+A_LA = np.pi * w_LA**2                  # Cross-sectional area of the laser beam [m^2]
+E_photon = h * c / wavelength_LA        # Energy per photon [J]
 V_LA = L_pump * np.pi * (220e-6)**2     # Volume of laser crystal [m^3]
 
 # Initial conditions
@@ -64,7 +66,7 @@ def laser_system(t, y, P_pump):
     L_SA = 2 * (N_g - N2) * sigma_SA * L_absorber
 
     # Photon lifetime in the cavity
-    t_p = ( 2 * L_cavity / c ) * 1 / (-np.log((1-T_out)*(1-L_passive)*(1-L_SA)))
+    t_p = ( 1 * L_cavity / c ) * 1 / (-np.log((1-T_out)*(1-L_passive)*(1-L_SA)))
 
     # Circulating photon flux equation
     dPhi_dt = 2 * N_LA * c * sigma_LA * Phi * (L_pump/(L_cavity)) - Phi / (t_p) + (N_LA / t_sp) * 1e-3
@@ -77,26 +79,13 @@ def laser_system(t, y, P_pump):
     return [dN_dt, dPhi_dt, dNg_dt, dN1_dt, dN2_dt]
 
 
-
 # Range of pump power
-P_pump_values = np.linspace(3.0, 4.0, 2)  
+P_pump_values = np.linspace(0.1, 4.0, 10)  
 steady_state_results = [] 
-time_span = (0, 1e-4)
+peak_powers = [] 
+time_span = (0, 1e-3)
 
-#Photon Flux
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
-plt.title("Photon Flux Over Time for Different Pump Powers (Spot Size: {w_SA}} µm)")
-plt.xlabel("Time [s]")
-plt.ylabel("Photon Flux [$m^{-2}s^{-1}$]")
-
-#Population Inversion
-plt.subplot(1, 2, 2)
-plt.title("Population Inversion Over Time for Different Pump Powers (Spot Size: {w_SA} µm)")
-plt.xlabel("Time [s]")
-plt.ylabel("Population Inversion [$m^{-3}$]")
-
-# Sweep over pump powers and solve solve_ivp
+# Solve the system for each pump power and calculate peak power
 for P_pump in P_pump_values:
     log.info(f'Simulating system for pump power: {P_pump:.2f} W')
     initial_conditions = [N_LA_initial, Phi_initial, Ng_initial, N1_initial, N2_initial]
@@ -109,23 +98,23 @@ for P_pump in P_pump_values:
         dense_output=True,
     )
 
+    # Extract results for the photon flux
     time_points = np.linspace(time_span[0], time_span[1], 1000000)
     results = solution.sol(time_points)
-
-    N_LA_results = results[0]
     Phi_results = results[1]
 
-    # Plot Photon Flux
-    plt.subplot(1, 2, 1)
-    plt.plot(time_points, Phi_results, label=f'Pump Power: {P_pump:.2f} W')
+    # Calculate the output power at each time step
+    P_out = Phi_results * A_LA * E_photon * T_out
 
-    # Plot Population Inversion
-    plt.subplot(1, 2, 2)
-    plt.plot(time_points, N_LA_results, label=f'Pump Power: {P_pump:.2f} W')
+    # Find the peak power for this pump power and store it
+    peak_power = np.max(P_out)
+    peak_powers.append(peak_power)
 
-plt.subplot(1, 2, 1)
-plt.legend()
-plt.subplot(1, 2, 2)
-plt.legend()
-plt.tight_layout()
+# Plot Peak Power vs Pump Power
+plt.figure(figsize=(8, 6))
+plt.plot(P_pump_values, peak_powers, marker='o', linestyle='-')
+plt.title("Peak Power of Emitted Pulses vs Pump Power")
+plt.xlabel("Pump Power [W]")
+plt.ylabel("Peak Power [W]")
+plt.grid(True)
 plt.show()
