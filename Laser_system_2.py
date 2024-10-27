@@ -59,17 +59,33 @@ w_SA_values = [100e-6, 150e-6]  # Spot sizes to test
 time_span = (0, 1e-3)
 
 # Plotting setup
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 2, 1)
+plt.figure(figsize=(18, 6))
+line_styles = ['-', '--']
+
+# Photon Flux
+plt.subplot(1, 4, 1)
 plt.title("Photon Flux Over Time for w_SA = 100 µm and 150 µm")
 plt.xlabel("Time [s]")
-plt.ylabel("Photon Flux [$m^{-2}s^{-1}$]")
+plt.ylabel("Photon Flux")
 
-plt.subplot(1, 2, 2)
+# Population Inversion of Laser
+plt.subplot(1, 4, 2)
 plt.title("Population Inversion Over Time for w_SA = 100 µm and 150 µm")
 plt.xlabel("Time [s]")
-plt.ylabel("Population Inversion [$m^{-3}$]")
+plt.ylabel("Population Inversion")
 
+# Population Inversion of Saturable Absorber (N2)
+plt.subplot(1, 4, 3)
+plt.title("Saturable Absorber Population (N2) Over Time for w_SA = 100 µm and 150 µm")
+plt.xlabel("Time [s]")
+plt.ylabel("Excited State Population in Absorber")
+
+# Population Inversion of Saturable Absorber (N2)
+plt.subplot(1, 4, 4)
+plt.title("Saturable Absorber Population (Ng) Over Time for w_SA = 100 µm and 150 µm")
+plt.xlabel("Time [s]")
+plt.ylabel("Ground state population in Absorber")
+idx = 0
 # Solve for each w_SA value
 for w_SA in w_SA_values:
     log.info(f'Simulating system for spot size w_SA: {w_SA*1e6:.0f} µm')
@@ -85,18 +101,37 @@ for w_SA in w_SA_values:
     
     N_LA_results = solution.y[0]
     Phi_results = solution.y[1]
+    Ng_results = solution.y[2] 
+    N2_results = solution.y[4]
+
 
     # Plot Photon Flux
-    plt.subplot(1, 2, 1)
-    plt.plot(solution.t, Phi_results, label=f'w_SA: {w_SA*1e6:.0f} µm')
+    plt.subplot(1, 4, 1)
+    plt.plot(solution.t, Phi_results, label=f'w_SA: {w_SA*1e6:.0f} µm', linestyle=line_styles[idx]) 
 
     # Plot Population Inversion
-    plt.subplot(1, 2, 2)
-    plt.plot(solution.t, N_LA_results, label=f'w_SA: {w_SA*1e6:.0f} µm')
+    plt.subplot(1, 4, 2)
+    plt.plot(solution.t, N_LA_results, label=f'w_SA: {w_SA*1e6:.0f} µm', linestyle=line_styles[idx])
 
-plt.subplot(1, 2, 1)
+    # Plot Saturable Absorber Population
+    plt.subplot(1, 4, 3)
+    plt.plot(solution.t, N2_results, label=f'w_SA: {w_SA*1e6:.0f} µm', linestyle=line_styles[idx])
+
+    # Plot Saturable Absorber Population
+    plt.subplot(1, 4, 4)
+    plt.plot(solution.t, Ng_results, label=f'w_SA: {w_SA*1e6:.0f} µm', linestyle=line_styles[idx])
+
+    idx += 1
+
+
+
+plt.subplot(1, 4, 1)
 plt.legend()
-plt.subplot(1, 2, 2)
+plt.subplot(1, 4, 2)
+plt.legend()
+plt.subplot(1, 4, 3)
+plt.legend()
+plt.subplot(1, 4, 4)
 plt.legend()
 plt.tight_layout()
 plt.show()

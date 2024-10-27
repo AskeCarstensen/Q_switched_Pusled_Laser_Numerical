@@ -91,13 +91,13 @@ plt.figure(figsize=(12, 6))
 plt.subplot(1, 2, 1)
 plt.title("Photon Flux Over Time for Different Pump Powers (Spot Size: {w_SA}} µm)")
 plt.xlabel("Time [s]")
-plt.ylabel("Photon Flux [$m^{-2}s^{-1}$]")
+plt.ylabel("Photon Flux")
 
 #Population Inversion
 plt.subplot(1, 2, 2)
 plt.title("Population Inversion Over Time for Different Pump Powers (Spot Size: {w_SA} µm)")
 plt.xlabel("Time [s]")
-plt.ylabel("Population Inversion [$m^{-3}$]")
+plt.ylabel("Population Inversion")
 
 # Sweep over pump powers and solve solve_ivp
 for P_pump in P_pump_values:
